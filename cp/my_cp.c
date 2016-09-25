@@ -45,13 +45,15 @@ void cpy(char* from, char* to, SBuff* buff)
         perror("No such file or directory");
         exit(1);
     }
-    struct dirent* curr;
+    struct dirent* curr = readdir(dir);
+    curr = readdir(dir);
     while ((curr = readdir(dir)) != NULL)
     {
         char* pathFrom = (char*)malloc((strlen(from) + strlen(curr->d_name) + 1) * sizeof(char));
         char* pathTo = (char*)malloc((strlen(from) + strlen(curr->d_name) + 1) * sizeof(char));
         strcat(strcat(strcat(pathFrom, from), "/"), curr->d_name);
         strcat(strcat(strcat(pathTo, to), "/"), curr->d_name);
+        printf("%s\n%s\n", pathFrom, pathTo);
         if (findType(curr->d_name))
         {
             mkdir(pathTo, 0777);
@@ -63,9 +65,8 @@ void cpy(char* from, char* to, SBuff* buff)
         {
             FILE* input = fopen(pathFrom, "rt");
             FILE* output = fopen(pathTo, "wt");
-            while (input)
+            while (fgets(buff->data, buff->size, input))
             {
-                fscanf(input, "%s", buff->data);
                 fprintf(output, "%s", buff->data);
             }
             fclose(input);
@@ -84,7 +85,7 @@ SBuff* createBuff(size_t size)
 
 int findType(char* d_name)
 {
-    while (*d_name++ != '\0')
+    while (*(d_name++) != '\0')
     {
         if (*d_name == '.')
             return 0; //file
