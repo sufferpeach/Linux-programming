@@ -14,7 +14,6 @@ typedef struct SBuff
 SBuff;
 
 SBuff* createBuff(size_t size);
-int findType(char* d_name);
 void cpy(char* from, char* to, SBuff* buff);
 
 int main(int argc, char** argv, char** envp)
@@ -53,10 +52,12 @@ void cpy(char* from, char* to, SBuff* buff)
         char* pathTo = (char*)malloc((strlen(from) + strlen(curr->d_name) + 1) * sizeof(char));
         strcat(strcat(strcat(pathFrom, from), "/"), curr->d_name);
         strcat(strcat(strcat(pathTo, to), "/"), curr->d_name);
-        printf("%s\n%s\n", pathFrom, pathTo);
-        if (findType(curr->d_name))
+        struct stat* currStat;
+        stat(pathFrom, currStat);
+        printf("%s\n", pathFrom);
+        if (S_ISDIR(currStat->st_mode))
         {
-            mkdir(pathTo, 0777);
+            mkdir(pathTo, currStat->st_mode);
             cpy(pathFrom, pathTo, buff);
             free(pathFrom);
             free(pathTo);
@@ -65,6 +66,7 @@ void cpy(char* from, char* to, SBuff* buff)
         {
             FILE* input = fopen(pathFrom, "rt");
             FILE* output = fopen(pathTo, "wt");
+            printf("asd\n");
             while (fgets(buff->data, buff->size, input))
             {
                 fprintf(output, "%s", buff->data);
@@ -81,14 +83,4 @@ SBuff* createBuff(size_t size)
     buff->data = malloc(size);
     buff->size = size;
     return buff;
-}
-
-int findType(char* d_name)
-{
-    while (*(d_name++) != '\0')
-    {
-        if (*d_name == '.')
-            return 0; //file
-    }
-    return 1; //directory
 }
