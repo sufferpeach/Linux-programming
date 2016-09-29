@@ -14,6 +14,7 @@ typedef struct SBuff
 SBuff;
 
 SBuff* createBuff(size_t size);
+void destroyBuff(SBuff* buff);
 void cpy(char* from, char* to, SBuff* buff);
 
 int main(int argc, char** argv, char** envp)
@@ -32,6 +33,8 @@ int main(int argc, char** argv, char** envp)
 
     SBuff* buff = createBuff(BUFF_SIZE);
     cpy(argv[1], argv[2], buff);
+    destroyBuff(buff);
+
     return 0;
 }
 
@@ -66,8 +69,9 @@ void cpy(char* from, char* to, SBuff* buff)
         {
             FILE* input = fopen(pathFrom, "rt");
             FILE* output = fopen(pathTo, "wt");
-            printf("asd\n");
-            while (fgets(buff->data, buff->size, input))
+            scanf("%s", buff->data);
+            printf("%s", buff->data);
+            while (fgets(buff->data, buff->size, input) != NULL)
             {
                 fprintf(output, "%s", buff->data);
             }
@@ -79,8 +83,15 @@ void cpy(char* from, char* to, SBuff* buff)
 
 SBuff* createBuff(size_t size)
 {
-    SBuff* buff = malloc(sizeof(SBuff));
-    buff->data = malloc(size);
+    SBuff* buff = (SBuff*)malloc(sizeof(SBuff));
+    buff->data = (char*)malloc((size + 1) * sizeof(char));
+    buff->data[size] = '\0';
     buff->size = size;
     return buff;
+}
+
+void destroyBuff(SBuff* buff)
+{
+    free(buff->data);
+    free(buff);
 }
