@@ -38,6 +38,7 @@ int main(int argc, char** argv, char** envp)
 
 void cpy(char* from, char* to)
 {
+    //SBuff* buff = createBuff(BUFF_SIZE);
     DIR* dir;
     dir = opendir(from);
     if (!dir)
@@ -49,8 +50,8 @@ void cpy(char* from, char* to)
     curr = readdir(dir);
     while ((curr = readdir(dir)) != NULL)
     {
-        char* pathFrom = (char*)malloc((strlen(from) + strlen(curr->d_name) + 1) * sizeof(char));
-        char* pathTo = (char*)malloc((strlen(from) + strlen(curr->d_name) + 1) * sizeof(char));
+        char* pathFrom = (char*)realloc(pathFrom, (strlen(from) + strlen(curr->d_name) + 1) * sizeof(char));
+        char* pathTo = (char*)realloc(pathTo, (strlen(to) + strlen(curr->d_name) + 1) * sizeof(char));
         strcat(strcat(strcat(pathFrom, from), "/"), curr->d_name);
         strcat(strcat(strcat(pathTo, to), "/"), curr->d_name);
         struct stat* currStat;
@@ -62,9 +63,8 @@ void cpy(char* from, char* to)
             free(pathFrom);
             free(pathTo);
         }
-        else
+        /*else
         {
-            SBuff* buff = createBuff(BUFF_SIZE);
             FILE* input = fopen(pathFrom, "r");
             FILE* output = fopen(pathTo, "w");
             while (fgets(buff->data, buff->size, input))
@@ -73,9 +73,9 @@ void cpy(char* from, char* to)
             }
             fclose(input);
             fclose(output);
-            destroyBuff(buff);            
-        }
+        }*/
     }
+    //destroyBuff(buff);
 }
 
 SBuff* createBuff(size_t size)
