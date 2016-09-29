@@ -15,7 +15,7 @@ SBuff;
 
 SBuff* createBuff(size_t size);
 void destroyBuff(SBuff* buff);
-void cpy(char* from, char* to, SBuff* buff);
+void cpy(char* from, char* to);
 
 int main(int argc, char** argv, char** envp)
 {
@@ -31,14 +31,12 @@ int main(int argc, char** argv, char** envp)
     }
     // 
 
-    SBuff* buff = createBuff(BUFF_SIZE);
-    cpy(argv[1], argv[2], buff);
-    destroyBuff(buff);
+    cpy(argv[1], argv[2]);
 
     return 0;
 }
 
-void cpy(char* from, char* to, SBuff* buff)
+void cpy(char* from, char* to)
 {
     DIR* dir;
     dir = opendir(from);
@@ -57,26 +55,26 @@ void cpy(char* from, char* to, SBuff* buff)
         strcat(strcat(strcat(pathTo, to), "/"), curr->d_name);
         struct stat* currStat;
         stat(pathFrom, currStat);
-        printf("%s\n", pathFrom);
         if (S_ISDIR(currStat->st_mode))
         {
             mkdir(pathTo, currStat->st_mode);
-            cpy(pathFrom, pathTo, buff);
+            cpy(pathFrom, pathTo);
             free(pathFrom);
             free(pathTo);
         }
         else
         {
+            SBuff* buff = createBuff(BUFF_SIZE);
             FILE* input = fopen(pathFrom, "rt");
             FILE* output = fopen(pathTo, "wt");
-            scanf("%s", buff->data);
-            printf("%s", buff->data);
-            while (fgets(buff->data, buff->size, input) != NULL)
+            printf("%zu\n", strlen(buff->data));
+            while (fgets(buff->data, buff->size, input))
             {
                 fprintf(output, "%s", buff->data);
             }
             fclose(input);
             fclose(output);
+            destroyBuff(buff);            
         }
     }
 }
@@ -84,8 +82,9 @@ void cpy(char* from, char* to, SBuff* buff)
 SBuff* createBuff(size_t size)
 {
     SBuff* buff = (SBuff*)malloc(sizeof(SBuff));
-    buff->data = (char*)malloc((size + 1) * sizeof(char));
-    buff->data[size] = '\0';
+    buff->data = (char*)calloc(size + 1, sizeof(char));
+    int i = 0;
+    printf("%s", buff->data);
     buff->size = size;
     return buff;
 }
