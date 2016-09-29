@@ -65,9 +65,8 @@ void cpy(char* from, char* to)
         else
         {
             SBuff* buff = createBuff(BUFF_SIZE);
-            FILE* input = fopen(pathFrom, "rt");
-            FILE* output = fopen(pathTo, "wt");
-            printf("%zu\n", strlen(buff->data));
+            FILE* input = fopen(pathFrom, "r");
+            FILE* output = fopen(pathTo, "w");
             while (fgets(buff->data, buff->size, input))
             {
                 fprintf(output, "%s", buff->data);
@@ -82,9 +81,7 @@ void cpy(char* from, char* to)
 SBuff* createBuff(size_t size)
 {
     SBuff* buff = (SBuff*)malloc(sizeof(SBuff));
-    buff->data = (char*)calloc(size + 1, sizeof(char));
-    int i = 0;
-    printf("%s", buff->data);
+    buff->data = (char*)calloc(size, sizeof(char));
     buff->size = size;
     return buff;
 }
