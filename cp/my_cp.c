@@ -1,11 +1,11 @@
-#define BUFF_SIZE 4096
-
 #include <stdio.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <dirent.h>
 #include <string.h>
 #include <stdlib.h>
+
+#define BUFF_SIZE 4096
 
 typedef struct SBuff
 {

@@ -1,9 +1,9 @@
-#define STR_SIZE 256
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+
+#define STR_SIZE 256
 
 struct programmDelay
 {

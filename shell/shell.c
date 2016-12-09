@@ -11,15 +11,15 @@
 
 #define LEN_NAME     100
 #define LEN_ARG      100
-#define LEN_COMMAND  100
+#define MAX_LINE_LENGTH  100
 #define LEN_BUF      1000
 
 #define NUM_ARG 20*sizeof(void*)
 #define NUM_CMD 20*sizeof(void*)
 
-#define quit          0
-#define fail_exec     1
-#define success_exec  2
+#define QUIT          0
+#define EXEC_FAIL     1
+#define EXEC_SUCCESS  2
 
 #define BYTES(bytes) \
 	WEXITSTATUS(bytes);
@@ -29,7 +29,7 @@
 
 
 #define NOT_OK \
-	exec->OK = FALSE; \
+	exec->OK = FALSE; \ 
 	return;
 
 #define IS_IT_ERROR(condition, note, punishment) \
@@ -57,13 +57,14 @@
 	
 #define M printf("Mitrikas\n");
 
-struct cmd_t{
+typedef struct cmd_t{
 	char* name;
 	char** arg;
 	int OK;
-};
+}
+cmd_t;
 
-void printMan()
+void printManual()
 {
     printf("==================.:Hello, my Dear Friend:.=====================\n"); \
     printf("Write your commands in form of 'cmd(1) | cmd(2) ... | cmd(n)'...\n"); \
@@ -77,7 +78,7 @@ int cmd_OK(struct cmd_t* exec){
 		exec->arg;
 }
 
-void cmd_ctor(struct cmd_t* exec){
+void constructCmd(struct cmd_t* exec){
 
 	exec->name = (char*)malloc(LEN_NAME);
 	IS_IT_ERROR(!exec->name, "Can't allocate memmory", NOT_OK);
@@ -95,7 +96,7 @@ void cmd_ctor(struct cmd_t* exec){
 	exec->OK = TRUE;
 }
 
-void cmd_dtor(struct cmd_t* exec){
+void destructCmd(struct cmd_t* exec){
 
 	free(exec->name);
 
@@ -127,34 +128,37 @@ char ERROR_NOTE[2000];
 
 int main(void){
 
-	printMan;
+	printManual();
 
-	char* command;
-	int ret;
+    char line[MAX_LINE_LENGTH];
 
-	while(1){
-		get_command(&command);
-		ret = exec_command(command);
-		switch(ret){
-			case quit: 	   return  0;
-			case fail_exec:	   return -1;
-			case success_exec: continue;
+	while(TRUE)
+    {
+        if (line = getline() == NULL)
+        {
+            continue;
+        }
+		int ret = execLine(line);
+		switch(ret)
+        {
+			case QUIT:
+                return  0;
+                break;
+			case EXEC_FAIL:
+                return -1;
+                break;
+            default:
+                break;
 		}
 	}
 }
 
-void get_command(char** command){
-	
-	char* Command = (char*)malloc(LEN_COMMAND);
-	if(!Command){
-		*command = NULL;
-		return;
-	}
-
-	printf("command: ");
-	fgets(Command, LEN_COMMAND, stdin);
+void getLine(char* line)
+{	
+	//printf("command: ");
+	fgets(line, MAX_LINE_LENGTH, stdin);
 	int OK;
-	command_OK(Command, &OK);
+	checkLine(line, &OK);
 	switch(OK){
 		case TRUE:  Command[strlen(Command)-1] = 0;
 			    break;
@@ -162,24 +166,19 @@ void get_command(char** command){
 			    break;
 	}
 
-	*command = Command;
+	return line;
 }
 
-void command_OK(char* command, int* OK){
-
-	if(!command){
-		printf("Can't get command from console. Error: %s", strerror(errno));
+void checkLine(char* line, int* OK)
+{
+	if(!line){
+		printf("Can't get command line from console. Error occured: %s", strerror(errno));
 		*OK = FALSE;
 		return;
 	}
 
-	if(!strchr(command, '\n')){
-		printf("Command line is too long. It should be less than %d\n", LEN_COMMAND);
-		*OK = FALSE;
-		return;
-	}
-
-	if(!*command){
+	if(!strchr(line, '\n')){
+		printf("Command line is too long. It should be less than %d symbols\n", MAX_LINE_LENGTH);
 		*OK = FALSE;
 		return;
 	}
@@ -187,13 +186,13 @@ void command_OK(char* command, int* OK){
 	*OK = TRUE;
 }
 
-int exec_command(char* command){
+int execLine(char* line){
 
-	if(!command) return quit;
-	if(!strcmp(command, EXIT)) return quit;
+	//if(!command) return QUIT;
+	if(!strcmp(command, EXIT)) return QUIT;
 
-	struct cmd_t exec;
-	cmd_ctor(&exec);
+	cmd_t exec;
+	constructCmd(&exec);
 
 	int Pipe[NUM_CMD][2];
 
@@ -228,7 +227,7 @@ void make_cmd(struct cmd_t* exec, char** command, int* Num_arg){
 
 	exec->OK = FALSE;
 
-	char Command[LEN_COMMAND];
+	char Command[MAX_LINE_LENGTH];
 	strcpy(Command, *command);
 
 	char* token;
