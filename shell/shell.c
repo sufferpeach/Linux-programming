@@ -204,7 +204,7 @@ int execLine(char* line){
 	int cnt = 0;
 
 	while(1){
-		make_cmd(&exec, &command, &num_arg);
+		make_cmd(&exec, &line, &num_arg);
 
 		pid = pipe(Pipe[num_cmd]);
 		ret = exec_cmd(&exec, num_cmd, Pipe[num_cmd-1], Pipe[num_cmd]);
@@ -223,7 +223,7 @@ int execLine(char* line){
 	return ret;
 }	
 
-void make_cmd(struct cmd_t* exec, char** command, int* Num_arg){
+void make_cmd(struct cmd_t* exec, char** line, int* Num_arg){
 
 	exec->OK = FALSE;
 
