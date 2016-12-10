@@ -17,9 +17,9 @@ int main(int argc, char** argv, char** envp)
 
     FILE *input = NULL;
     if (argc == 1)
-        input = fopen("input.txt", "rt");
+        printf("Enter file name");
     if (argc == 2)
-        input = fopen("input.txt", "rt");
+        input = fopen(argv[1], "rt");
     if (input == NULL)
     {
         perror("Incorrect filename");
@@ -32,7 +32,6 @@ int main(int argc, char** argv, char** envp)
 
     while ((fscanf(input, "%zd", &curr.delay) > 0) && (fgets(curr.name, STR_SIZE, input)))
     {
-        printf("%zd\n", curr.delay);
         amount++;
         arr = (struct programmDelay*)realloc(arr, amount * sizeof(struct programmDelay));
         arr[amount - 1].delay = curr.delay;

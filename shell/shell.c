@@ -11,31 +11,28 @@
 
 #define LEN_NAME     100
 #define LEN_ARG      100
-#define MAX_LINE_LENGTH  100
 #define LEN_BUF      1000
 
-#define NUM_ARG 20*sizeof(void*)
-#define NUM_CMD 20*sizeof(void*)
-
+#define EXEC_FAIL     -1
 #define QUIT          0
-#define EXEC_FAIL     1
-#define EXEC_SUCCESS  2
+#define EXEC_SUCCESS  1
 
 #define BYTES(bytes) \
 	WEXITSTATUS(bytes);
 
 #define UNKNOWN_CMD 	"I don't know this command!\n"
-#define EXIT 		"exit"
-
 
 #define NOT_OK \
 	exec->OK = FALSE; \ 
 	return;
 
-#define IS_IT_ERROR(condition, note, punishment) \
-	if(condition){ \
-		if(note) fprintf(stderr, "%s. Error: %s\n", note, strerror(errno)); \
-		punishment; \
+#define CMD_IS_OK(exec) exec->OK && exec->name && exec->arg;
+
+#define IS_IT_ERROR(condition, note, action) \
+	if (condition) \
+    { \
+		if (note) fprintf(stderr, "%s. Error: %s\n", note, strerror(errno)); \
+		action; \
 	}
 
 #define dump(exec) \
@@ -60,84 +57,67 @@
 typedef struct cmd_t{
 	char* name;
 	char** arg;
+    size_t argAmount;
 	int OK;
 }
 cmd_t;
 
 void printManual()
 {
-    printf("==================.:Hello, my Dear Friend:.=====================\n"); \
-    printf("Write your commands in form of 'cmd(1) | cmd(2) ... | cmd(n)'...\n"); \
-    printf("--------------------(type '%s' to quite)----------------------\n", EXIT)
+    printf("Here manual wanna be\n");
 }
 
-int cmd_OK(struct cmd_t* exec){
-
-	 return exec->OK &&
-		exec->name &&
-		exec->arg;
-}
-
-void constructCmd(struct cmd_t* exec){
-
-	exec->name = (char*)malloc(LEN_NAME);
-	IS_IT_ERROR(!exec->name, "Can't allocate memmory", NOT_OK);
-
-	exec->arg = malloc(NUM_ARG);
-	IS_IT_ERROR(!exec->arg, "Can't allocate memmory", NOT_OK);
-
-	int num_arg = 0;
-	while(num_arg < NUM_ARG){
-		exec->arg[num_arg] = (char*)malloc(LEN_ARG);
-		IS_IT_ERROR(!exec->arg[num_arg], "Can't allocate memmory", NOT_OK);
-		num_arg++;
-	}
-
-	exec->OK = TRUE;
-}
-
-void destructCmd(struct cmd_t* exec){
-
-	free(exec->name);
-
-	int num_arg = 0;
-	while(num_arg < NUM_ARG){
-		if(exec->arg[num_arg]) free(exec->arg[num_arg]);
-		num_arg++;
-	}
-
-	free(exec->arg);
-
+cmd_t* constructCmd()
+{
+    cmd_t *exec = (char*)malloc(sizeof(cmd_t));
+	exec->name = NULL;
+	exec->arg = NULL;
+    argAmount = 0;
 	exec->OK = FALSE;
+    return exec;
+}
+
+void destructCmd(cmd_t* exec)
+{
+	free(exec->name);
+	for (int i = 0; i < argAmount; i++)
+	{
+        free(exec->arg[i]);
+	}
+	free(exec->arg);
+    argAmount = 0;
+	exec->OK = FALSE;
+    free(exec);
 }
 
 
-void close_pipe   (int    Pipe[2]					   		     );
-void get_command  (char** command							     );
-int  exec_command (char*  command							     );
-void command_OK   (char*  command,     int*   OK 					     );
-void make_cmd     (struct cmd_t* exec, char** command,     int* Num_arg			     );
-int  exec_cmd     (struct cmd_t* exec, int    num_cmd,     int  pipe_prev[2], int pipe_cur[2]);
-void renew 	  (struct cmd_t* exec, int    num_arg					     );
-void unknown	  (char* string,       int*   unknown_cmd, int  size			     );
-int  count_bytes  (struct cmd_t* exec, int    Pipe[2],     int  brother			     );
-int  over         (struct cmd_t* exec, char*  command,     int  ret                          );
+
+char* getLine();
+int  execLine(char* line);
+void makeCmd(cmd_t* exec, char** line, int* Num_arg);
+int  executeCmd(cmd_t* exec, int num_cmd, int  pipe_prev[2], int pipe_cur[2]);
+void renew(cmd_t* exec, int num_arg);
+void unknown(char* string, int* unknown_cmd, int size);
+void close_pipe(int Pipe[2]);
+int  count_bytes(cmd_t* exec, int Pipe[2], int  brother);
+int  over(cmd_t* exec, char* line, int  ret);
 
 char ERROR_NOTE[2000];
 
 
-int main(void){
-
+int main(int argc, char** argv, char** envp)
+{
 	printManual();
 
     char line[MAX_LINE_LENGTH];
 
 	while(TRUE)
     {
-        if (line = getline() == NULL)
+        if (!line)
         {
-            continue;
-        }
+		    printf("Can't get command line from console. Error occured: %s", strerror(errno));
+		    return 0;
+	    }
 		int ret = execLine(line);
 		switch(ret)
         {
@@ -155,44 +135,27 @@ int main(void){
 
 void getLine(char* line)
 {	
-	//printf("command: ");
-	fgets(line, MAX_LINE_LENGTH, stdin);
-	int OK;
-	checkLine(line, &OK);
-	switch(OK){
-		case TRUE:  Command[strlen(Command)-1] = 0;
-			    break;
-		case FALSE: Command = NULL;
-			    break;
-	}
+	char* line = malloc(sizeof(char));
+    line[0] = '\0';
+    size_t memSize = 1;
+    char c, str[2];
+    while ((c = getc(stdin)) != '\n')
+    {
+        memSize++;
+        str[0] = c;
+        str[1] = '\0';
+        line = (char*)realloc(line, (memSize + 1) * sizeof(char));
+        strcat(line, str);  
+    }
 
 	return line;
 }
 
-void checkLine(char* line, int* OK)
+int execLine(char* line)
 {
-	if(!line){
-		printf("Can't get command line from console. Error occured: %s", strerror(errno));
-		*OK = FALSE;
-		return;
-	}
-
-	if(!strchr(line, '\n')){
-		printf("Command line is too long. It should be less than %d symbols\n", MAX_LINE_LENGTH);
-		*OK = FALSE;
-		return;
-	}
-
-	*OK = TRUE;
-}
-
-int execLine(char* line){
-
-	//if(!command) return QUIT;
 	if(!strcmp(command, EXIT)) return QUIT;
 
-	cmd_t exec;
-	constructCmd(&exec);
+	cmd_t *exec = constructCmd();
 
 	int Pipe[NUM_CMD][2];
 
@@ -204,10 +167,10 @@ int execLine(char* line){
 	int cnt = 0;
 
 	while(1){
-		make_cmd(&exec, &line, &num_arg);
+		makeCmd(&exec, &line, &num_arg);
 
 		pid = pipe(Pipe[num_cmd]);
-		ret = exec_cmd(&exec, num_cmd, Pipe[num_cmd-1], Pipe[num_cmd]);
+		ret = executeCmd(&exec, num_cmd, Pipe[num_cmd-1], Pipe[num_cmd]);
 
 		if(num_cmd) close_pipe(Pipe[num_cmd-1]);
 		if(command) wait(&ret);
@@ -223,7 +186,7 @@ int execLine(char* line){
 	return ret;
 }	
 
-void make_cmd(struct cmd_t* exec, char** line, int* Num_arg){
+void makeCmd(struct cmd_t* exec, char** line, int* Num_arg){
 
 	exec->OK = FALSE;
 
@@ -273,14 +236,14 @@ void make_cmd(struct cmd_t* exec, char** line, int* Num_arg){
 		*command += offset;
 	}
 	else{
-		exec->arg[num_arg] = NULL;
+		exec->arg[num_arg] = NULL;                          
 		*command = NULL;
 	}
 
 	exec->OK = TRUE;
 }
 
-int exec_cmd(struct cmd_t* exec, int num_cmd, int pipe_prev[2], int pipe_cur[2]){
+int executeCmd(struct cmd_t* exec, int num_cmd, int pipe_prev[2], int pipe_cur[2]){
 
 	if(exec->OK == FALSE) return -1;
 
