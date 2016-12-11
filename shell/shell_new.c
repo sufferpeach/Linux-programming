@@ -1,8 +1,12 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <errno.h>
 
-#define CHECK_CMD(cmd) name && (arg || argAmount)
+#define TRUE 1
+
+#define CHECK_CMD(cmd) cmd->name && (cmd->arg || cmd->argAmount)
+#define MIN(a, b) ((a - b) > 0) ? b : a
 
 typedef struct cmd_t
 {
@@ -14,7 +18,7 @@ cmd_t;
 
 typedef struct cmdList_t
 {
-    cmd_t* cmd;
+    cmd_t** cmd;
     size_t cmdAmount;
 }
 cmdList_t;
@@ -42,18 +46,19 @@ int main(int argc, char** argv, char** envp)
             exit(errno);
 	    }
 		cmdList_t*  list = constructCmdList(line);
-        for (int i = 0; i < list->cmdAmount; i++)
+        for (size_t i = 0; i < list->cmdAmount; i++)
         {
-            for (int j = 0; j < list->cmd[i]->argAmount + 1; j++)
+            for (size_t j = 0; j < list->cmd[i]->argAmount + 1; j++)
             {
                 if (j == 0)
                 {
-                    printf("%s", list->cmd[i]->name);
+                    printf("%s ", list->cmd[i]->name);
                 }
                 else
                 {
-                    printf("%s", list->cmd[i]->arg[j]);
+                    printf("%s ", list->cmd[i]->arg[j]);
                 }
+                //printf("dsaadsdasdasas %zu %zu\n", list->cmdAmount, list->cmd[i]->argAmount);
             }
         }
 	}
@@ -82,28 +87,36 @@ cmd_t* constructCmd(char* cmdLine)
 {
     cmd_t* cmd = (cmd_t*)malloc(sizeof(cmd_t));
     cmd->argAmount = 0;
-    cmdLine = strtok(line," |");
+    char* line = cmdLine;
 
-    if (!cmdLine)
+    if (!line)
     {
         perror("Ivalid command");
-        perror(cmdLine);
+        perror(line);
         exit(errno);
     }
-    cmd->name = cmdLine;
-
-    while (cmdLine != NULL)
+    cmd->name = line;
+    line = MIN(strchr(line, ' '), strchr(line, '|'));
+    while ((*line == '|' || *line == ' ') && line)
     {
-        argAmount++;
-        cmd->arg = (cmd_t*)realloc(cmd->arg, argAmount * sizeof(char*));
-        if (!cmdLine)
-        {
-            perror("Ivalid command");
-            perror(cmdLine);
-            exit(errno);
+        *line = '\0';
+        line++;
+    }
+    printf("%s\n", cmd->name);
+    printf("%s\n", line);
+
+    while (line)
+    {
+        cmd->argAmount++;
+        cmd->arg = (char**)realloc(cmd->arg, cmd->argAmount * sizeof(char*));
+        cmd->arg[cmd->argAmount - 1] = line;
+        line = MIN(strchr(line, ' '), strchr(line, '|'));
+        printf("%zu\n", cmd->argAmount);
+        while ((*line == '|' || *line == ' ') && line)
+        {   
+            *line = '\0';
+            line++;
         }
-        cmd->arg[cmd->argAmount - 1] = cmdLine;
-        cmdLine = strtok(line,"|");
     }
 
     return cmd;
@@ -116,37 +129,24 @@ void destructCmd(cmd_t* cmd)
 
 cmdList_t* constructCmdList(char* line)
 {
-    cmdList_t* cmdList = (cmdList*)malloc(sizeof(cmdList));
+    cmdList_t* cmdList = (cmdList_t*)malloc(sizeof(cmdList));
     cmdList->cmdAmount = 0;
-    char* cmdLine = strtok(line,"|");
     cmd_t* cmd;
+    char* cmdLine = line;
 
-    if (cmdLine == NULL)
+    while (cmdLine)
     {
-        if (!(CHECK_CMD(cmd = constructCmd(line))))
-        {
-            perror("Ivalid command");
-            perror(cmd->name);
-            exit(errno);
-        }
-        cmdAmount++;
-        cmdList->cmd = (cmd_t*)realloc(cmdList->cmd, cmdAmount * sizeof(cmd_t*));
-        cmdList->cmd[cmdList->cmdAmount - 1] = cmd;
-        return cmdList;
-    }
-
-    while (cmdLine != NULL)
-    {
-        cmdAmount++;
-        cmdList->cmd = (cmd_t*)realloc(cmdList->cmd, cmdAmount * sizeof(cmd_t*));
-        if (!(CHECK_CMD(cmd = constructCmd(line))))
+        printf("dddddd\n");
+        cmdList->cmdAmount++;
+        cmdList->cmd = (cmd_t**)realloc(cmdList->cmd, cmdList->cmdAmount * sizeof(cmd_t*));
+        if (!(CHECK_CMD((cmd = constructCmd(cmdLine)))))
         {
             perror("Ivalid command");
             perror(cmd->name);
             exit(errno);
         }
         cmdList->cmd[cmdList->cmdAmount - 1] = cmd;
-        cmdLine = strtok(line,"|");
+        cmdLine = strchr(cmdLine, '|');
     }
 
     return cmdList;
