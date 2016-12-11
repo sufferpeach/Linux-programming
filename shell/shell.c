@@ -20,7 +20,7 @@
 #define BYTES(bytes) \
 	WEXITSTATUS(bytes);
 
-#define UNKNOWN_CMD 	"I don't know this command!\n"
+#define UNKNOWN_CMD "Unknown command\n"
 
 #define NOT_OK \
 	exec->OK = FALSE; \ 
