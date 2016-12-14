@@ -5,19 +5,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define BUFF_SIZE 4096
-
-typedef struct SBuff
-{
-    char* data;
-    size_t size;
-}
-SBuff;
-
 void cpy(const char* from, const char* to);
 void fileCpy(const char* from, const char* to);
-SBuff* createBuff(const size_t size);                         //memory must be freed by following destructor
-void destroyBuff(SBuff* buff);
 char* findLastIteration(const char* str, const char symb);    //if there are no slashes in str - it returns NULL
 char* myStrcat(char* dest, const char* src);
 
@@ -164,18 +153,4 @@ char* findLastIteration(const char* str, const char symb)
     }
 
     return NULL;
-}
-
-SBuff* createBuff(size_t size)
-{
-    SBuff* buff = (SBuff*)malloc(sizeof(SBuff));
-    buff->data = (char*)malloc(size * sizeof(char));
-    buff->size = size;
-    return buff;
-}
-
-void destroyBuff(SBuff* buff)
-{
-    free(buff->data);
-    free(buff);
 }
