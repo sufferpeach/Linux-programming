@@ -1,13 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <assert.h>
-#include <fcntl.h>
-#include <string.h>
 #include <errno.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <assert.h>
+#include <fcntl.h>
+#include <string.h>
 
 #define LEN_NAME     100
 #define LEN_ARG      100
@@ -49,10 +49,6 @@
 		case FALSE: printf("	exec->OK = FALSE\n"); \
 			    break; \
 	} \
-	printf("}\n");\
-	printf("command = \"%s\"\n", command);
-	
-#define M printf("Mitrikas\n");
 
 typedef struct cmd_t{
 	char* name;
