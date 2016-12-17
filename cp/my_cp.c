@@ -33,10 +33,6 @@ int main(int argc, char** argv, char** envp)
     {
         return 0;
     }
-    if (argv[1][0] != '/')
-    {
-        printf("%s\n", argv[1]);
-    }
     //
 
     //make output directory
@@ -87,7 +83,6 @@ void cpy(const char* from, const char* to)
     {
         if ((strcmp(curr->d_name, ".") && strcmp(curr->d_name, "..")))
         {
-            printf("%s\n", curr->d_name);
             char* pathFrom = (char*)malloc((strlen(from) + strlen(curr->d_name) + 2) * sizeof(char));
             char* pathTo = (char*)malloc((strlen(to) + strlen(curr->d_name) + 2) * sizeof(char));
 
